@@ -1,0 +1,146 @@
+/* Стили страницы документации */
+
+.docs-page-body {
+    background: var(--bg-main);
+    padding: 30px 20px;
+    min-height: 100vh;
+}
+
+.docs-shell {
+    max-width: 980px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: var(--radius-lg);
+    padding: 36px 40px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-color);
+}
+
+.docs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 2px solid var(--accent-dark);
+    margin-bottom: 24px;
+}
+
+.docs-header .report-brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.docs-header .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--accent-dark);
+    color: #fff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.docs-header h1 { font-size: 22px; color: var(--accent-dark); }
+.docs-header p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.docs-toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    margin-bottom: 32px;
+    font-size: 13px;
+}
+
+.docs-toc a {
+    color: var(--accent-primary);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+.docs-toc a:hover { background: #e0e7ff; }
+
+.docs-shell section {
+    margin-bottom: 40px;
+}
+
+.docs-shell section h2 {
+    font-size: 18px;
+    color: var(--accent-dark);
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.docs-shell section h3 {
+    font-size: 14px;
+    color: var(--text-main);
+    margin: 18px 0 8px;
+}
+
+.docs-shell p {
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.docs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin: 10px 0 16px;
+}
+
+.docs-table th, .docs-table td {
+    border: 1px solid var(--border-color);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.docs-table th {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: var(--accent-dark);
+}
+
+.docs-shell pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 8px 0 16px;
+}
+
+.docs-shell code {
+    background: #eef2f7;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--accent-dark);
+}
+
+.docs-shell pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+}
+
+.docs-shell ul {
+    padding-left: 22px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.docs-shell a { color: var(--accent-primary); }
