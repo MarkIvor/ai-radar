@@ -1,0 +1,23 @@
+services:
+  ai-radar:
+    build: .
+    image: ai-radar:latest
+    container_name: ai-radar
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MASTER_PASSWORD=airadar
+      - JWT_SECRET=change-me-in-production-please
+      - DATABASE_PATH=/app/storage/airadar.db
+      - JUDGE_MODE=ensemble
+      - VETO_THRESHOLD=75
+      - DOCS_ENABLED=true
+    volumes:
+      - ./storage:/app/storage
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
