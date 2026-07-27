@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Radar — Детектор ИИ-контента & AI Judge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300..800;1,300..800&family=Tektur:wght@400..900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- AUTH SCREEN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i data-lucide="radar"></i>
+                </div>
+                <div style="text-align: left;">
+                    <h2 class="font-tektur" style="font-size: 22px;">AI RADAR</h2>
+                    <p style="font-size: 11px; color: var(--text-muted);">INTEGRITY DETECTOR</p>
+                </div>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">
+                Вход в систему контроля академической честности
+            </p>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label>Логин</label>
+                    <input type="text" id="auth-login" class="input-field" placeholder="admin" required autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label>Пароль</label>
+                    <input type="password" id="auth-password" class="input-field" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i data-lucide="lock"></i> ВОЙТИ В СИСТЕМУ
+                </button>
+            </form>
+            <p id="login-error" style="color: var(--accent-danger); font-size: 12px; margin-top: 12px; display: none;">
+                Неверный логин или пароль!
+            </p>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 16px;">
+                По умолчанию: логин <code>admin</code>, пароль <code>airadar</code>
+            </p>
+        </div>
+    </div>
+
+    <!-- MAIN APP INTERFACE -->
+    <div class="app-container" id="app-container" style="display:none;">
+
+        <!-- SIDEBAR NAV -->
+        <aside class="sidebar">
+            <div>
+                <div class="sidebar-brand">
+                    <i data-lucide="radar"></i>
+                </div>
+                <nav class="nav-menu">
+                    <div class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')" title="Обзор и Быстрая Проверка">
+                        <i data-lucide="layout-dashboard"></i>
+                    </div>
+                    <div class="nav-item" data-tab="folders" onclick="switchTab('folders')" title="Папки и Работы">
+                        <i data-lucide="folder-tree"></i>
+                    </div>
+                    <div class="nav-item" data-tab="admin" onclick="switchTab('admin')" title="Админ-панель">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                </nav>
+            </div>
+            <div class="nav-item" onclick="logout()" title="Выйти">
+                <i data-lucide="log-out"></i>
+            </div>
+        </aside>
+
+        <!-- MAIN WRAPPER -->
+        <div class="main-wrapper">
+
+            <!-- TOP HEADER -->
+            <header class="top-header">
+                <div class="search-bar">
+                    <i data-lucide="search" style="color: var(--text-muted); width: 18px;"></i>
+                    <input type="text" id="global-search" placeholder="Поиск по файлам, авторам, отчетам..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                </div>
+
+                <div class="header-actions">
+                    <div class="badge-status" id="judge-status-badge">
+                        <div class="dot-online"></div>
+                        <span id="judge-status-text">JUDGE:...</span>
+                    </div>
+                    <button class="btn-secondary btn-sm" onclick="openPasswordModal()" title="Сменить пароль">
+                        <i data-lucide="key" style="width: 14px;"></i>
+                    </button>
+                    <a class="btn-secondary btn-sm" href="/docs-page" target="_blank" title="Документация API">
+                        <i data-lucide="book-open" style="width: 14px;"></i> API
+                    </a>
+                    <button class="btn-secondary btn-sm" onclick="triggerQuickScanFocus()">
+                        <i data-lucide="zap" style="width: 14px; color: var(--accent-warning);"></i> Проверить текст
+                    </button>
+                </div>
+            </header>
+
+            <!-- DASHBOARD / MAIN CONTENT AREA -->
+            <div class="content-area">
+
+                <!-- LEFT CONTENT VIEW -->
+                <div class="view-panel" id="view-dashboard">
+
+                    <!-- EXPRESS QUICK SCAN CARD -->
+                    <div class="card" id="quick-scan-card">
+                        <div class="card-header">
+                            <h2 class="card-title font-tektur">Проверка текста</h2>
+                            <span style="font-size: 12px; color: var(--text-muted);">без сохранения в папки</span>
+                        </div>
+
+                        <div class="dropzone-container" onclick="document.getElementById('quick-file-input').click()">
+                            <div class="dropzone-icon">
+                                <i data-lucide="upload-cloud"></i>
+                            </div>
+                            <h4 class="font-tektur" style="font-size: 15px; margin-bottom: 6px;">Перетащите файл (.docx, .txt, .pdf)</h4>
+                            <p style="font-size: 12px; color: var(--text-muted);">или кликните для выбора с компьютера</p>
+                            <input type="file" id="quick-file-input" style="display: none;" accept=".txt,.docx,.pdf" onchange="handleFileSelect(event)">
+                        </div>
+
+                        <div id="file-selected-banner" class="file-banner" style="display:none;">
+                            <i data-lucide="file-text" style="width:18px; color: var(--accent-success);"></i>
+                            <span>Загружен файл: <strong id="file-selected-name">—</strong></span>
+                            <button class="btn-danger btn-sm" onclick="clearQuickScan()" style="margin-left:auto;">✕ Убрать</button>
+                        </div>
+
+                        <div style="margin-top: 16px;">
+                            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Или вставьте текст напрямую:</label>
+                            <textarea id="quick-text-input" class="text-area-quick" placeholder="Вставьте сюда текст работы для мгновенного анализа Сигнал 1 + AI Judge..."></textarea>
+                        </div>
+
+                        <div id="scan-progress" class="scan-progress" style="display:none;">
+                            <div class="progress-header">
+                                <h4 class="font-tektur" style="font-size:14px;" id="progress-title">Подготовка...</h4>
+                                <span id="progress-eta" style="font-size:12px; color: var(--text-muted);">— сек</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="progress-bar-fill" class="progress-bar-fill" style="width:0%;"></div>
+                            </div>
+                            <div id="progress-steps" class="progress-steps"></div>
+                        </div>
+
+                        <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 12px;">
+                            <button class="btn-secondary" onclick="clearQuickScan()">Очистить</button>
+                            <button class="btn-primary" style="width: auto; padding: 12px 28px;" onclick="runQuickScan()" id="btn-run-quick">
+                                <i data-lucide="cpu"></i> ЗАПУСТИТЬ РАДАР
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- RECENT SCANS LIST -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title font-tektur">Последние проверки</h3>
+                            <button class="btn-secondary btn-sm" onclick="switchTab('folders')">Все файлы</button>
+                        </div>
+                        <div id="recent-scans-list" style="display: flex; flex-direction: column; gap: 10px;">
+                            <p style="font-size:13px; color: var(--text-muted);">Загрузка...</p>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVE TASKS -->
+                    <div class="card" id="active-tasks-card" style="display:none;">
+                        <div class="card-header">
+                            <h3 class="card-title font-tektur">Активные проверки</h3>
+                        </div>
+                        <div id="active-tasks-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+                    </div>
+
+                </div>
+
+                <!-- FOLDER EXPLORER VIEW -->
+                <div class="view-panel" id="view-folders" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title font-tektur">Хранилище Работ и Папок</h2>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-secondary btn-sm" onclick="createNewFolder()">
+                                    <i data-lucide="folder-plus" style="width: 14px;"></i> Новая папка
+                                </button>
+                            </div>
+                        </div>
+                        <div id="folder-tree-root" class="folder-tree">
+                            <p style="font-size:13px; color: var(--text-muted);">Загрузка...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADMIN SETTINGS VIEW -->
+                <div class="view-panel" id="view-admin" style="display: none;">
+                    <div class="admin-box">
+                        <h2 class="card-title font-tektur" style="margin-bottom: 20px;">Настройки системы AI Radar</h2>
+
+                        <div style="max-width: 540px; display: flex; flex-direction: column; gap: 20px;">
+                            <div class="input-group">
+                                <label>Новый мастер-пароль входа (минимум 6 символов)</label>
+                                <input type="password" id="new-admin-password" class="input-field" placeholder="оставьте пустым, чтобы не менять">
+                            </div>
+
+                            <div class="input-group">
+                                <label>Порог автоматического ВЕТО AI Judge (%)</label>
+                                <input type="number" id="veto-threshold" class="input-field" min="50" max="95" placeholder="75">
+                            </div>
+
+                            <div class="input-group">
+                                <label>Режим суда</label>
+                                <select id="judge-mode" class="input-field">
+                                    <option value="ensemble">Ансамбль (несколько моделей голосуют)</option>
+                                    <option value="single">Одиночный (только первая активная модель)</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Max retries (при невалидном JSON ответа)</label>
+                                <input type="number" id="judge-retries" class="input-field" min="0" max="5" placeholder="2">
+                            </div>
+
+                            <button class="btn-primary" style="width: auto; align-self: flex-start;" onclick="saveAdminSettings()">
+                                <i data-lucide="save"></i> Сохранить настройки
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- LLM PROVIDERS — ENSEMBLE -->
+                    <div class="admin-box" style="margin-top: 20px;">
+                        <div class="card-header" style="margin-bottom: 12px;">
+                            <h2 class="card-title font-tektur">Ансамбль детекторов (Сигнал 2, Уровень 1)</h2>
+                            <span class="tooltip-hint" data-tip="Ансамбль — модели, которые анализируют сам текст работы. Чем больше разных семейств, тем устойчивее вердикт.">
+                                <i data-lucide="help-circle" style="width:16px; color: var(--text-muted); cursor: help;"></i>
+                            </span>
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                            Рекомендуемые семейства: <strong>ChatGPT</strong> (openai/gpt-*),
+                            <strong>Claude</strong> (anthropic/claude-*),
+                            <strong>Gemini</strong> (google/gemini-*),
+                            <strong>DeepSeek</strong> (deepseek/*),
+                            <strong>Grok</strong> (x-ai/grok-*),
+                            <strong>Kimi</strong> (moonshotai/kimi-*).
+                            Все активные модели опрашиваются параллельно, вердикты агрегируются (медиана ai_score, голосование по VETO).
+                        </p>
+                        <div id="llm-providers-ensemble" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 16px;"></div>
+
+                        <h3 class="font-tektur" style="font-size: 14px; margin-bottom: 10px;">Добавить детектор в ансамбль</h3>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 760px;">
+                            <input type="text" id="llm-name" class="input-field" placeholder="Имя (напр. Claude Sonnet 5)">
+                            <input type="text" id="llm-model" class="input-field" placeholder="Модель (anthropic/claude-sonnet-5)">
+                            <input type="text" id="llm-baseurl" class="input-field" placeholder="Base URL (https://api.../v1)">
+                            <input type="password" id="llm-apikey" class="input-field" placeholder="API key">
+                        </div>
+                        <button class="btn-secondary" style="margin-top: 10px;" onclick="addLlmProvider('ensemble')">
+                            <i data-lucide="plus"></i> Добавить в ансамбль
+                        </button>
+                    </div>
+
+                    <!-- LLM PROVIDERS — JUDGE -->
+                    <div class="admin-box" style="margin-top: 20px;">
+                        <div class="card-header" style="margin-bottom: 12px;">
+                            <h2 class="card-title font-tektur">Метасудья (Сигнал 2, Уровень 2)</h2>
+                            <span class="tooltip-hint" data-tip="Метасудья — ОДНА сильная модель, которая НЕ видит исходный текст, а оценивает вердикты ансамбля детекторов. Имеет право БЛОКИРУЮЩЕГО ВЕТО.">
+                                <i data-lucide="help-circle" style="width:16px; color: var(--text-muted); cursor: help;"></i>
+                            </span>
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                            Рекомендация: <strong>Claude Opus/Sonnet</strong> или <strong>Gemini Pro</strong>.
+                            Судья получает только сводку Сигнала 1 + вердикты ансамбля + промпт, без самого текста работы.
+                            Может наложить ВЕТО независимо от процента.
+                        </p>
+                        <div id="llm-providers-judge" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 16px;"></div>
+
+                        <h3 class="font-tektur" style="font-size: 14px; margin-bottom: 10px;">Назначить метасудью</h3>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 760px;">
+                            <input type="text" id="judge-name" class="input-field" placeholder="Имя (напр. Claude Opus)">
+                            <input type="text" id="judge-model" class="input-field" placeholder="Модель (anthropic/claude-opus-4)">
+                            <input type="text" id="judge-baseurl" class="input-field" placeholder="Base URL (https://api.../v1)">
+                            <input type="password" id="judge-apikey" class="input-field" placeholder="API key">
+                        </div>
+                        <button class="btn-secondary" style="margin-top: 10px;" onclick="addLlmProvider('judge')">
+                            <i data-lucide="gavel"></i> Назначить судью
+                        </button>
+                    </div>
+
+                    <!-- USERS MANAGEMENT (admin only) -->
+                    <div class="admin-box" style="margin-top: 20px;" id="users-section">
+                        <h2 class="card-title font-tektur" style="margin-bottom: 12px;">Пользователи системы</h2>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                            Управление преподавателями. Admin видит все папки и настройки, teacher — только свои папки и смену пароля.
+                        </p>
+                        <div id="users-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 16px;"></div>
+
+                        <h3 class="font-tektur" style="font-size: 14px; margin-bottom: 10px;">Создать преподавателя</h3>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; max-width: 760px;">
+                            <input type="text" id="user-login" class="input-field" placeholder="Логин">
+                            <input type="text" id="user-displayname" class="input-field" placeholder="Имя (Иван Иванов)">
+                            <input type="password" id="user-password" class="input-field" placeholder="Пароль">
+                        </div>
+                        <button class="btn-secondary" style="margin-top: 10px;" onclick="createUser()">
+                            <i data-lucide="user-plus"></i> Создать преподавателя
+                        </button>
+                    </div>
+
+                    <!-- API KEYS -->
+                    <div class="admin-box" style="margin-top: 20px;">
+                        <div class="card-header" style="margin-bottom: 12px;">
+                            <h2 class="card-title font-tektur">API-ключи программного доступа</h2>
+                            <a class="btn-secondary btn-sm" href="/docs-page" target="_blank">
+                                <i data-lucide="book-open" style="width:14px;"></i> Документация
+                            </a>
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                            Ключи <code>air_...</code> для доступа к API из скриптов и интеграций.
+                            Передаются через <code>Authorization: Bearer air_...</code> или <code>X-API-Key: air_...</code>.
+                            Полный ключ показывается один раз при создании; для повторного просмотра используйте иконку глаза (если ключ не отозван).
+                        </p>
+                        <div id="api-keys-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 16px;"></div>
+
+                        <h3 class="font-tektur" style="font-size: 14px; margin-bottom: 10px;">Создать новый ключ</h3>
+                        <div style="display:flex; gap: 10px; max-width: 480px;">
+                            <input type="text" id="api-key-name" class="input-field" placeholder="Имя ключа (напр. CI бэкап)">
+                            <button class="btn-secondary" onclick="createApiKey()">
+                                <i data-lucide="key"></i> Создать
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDEBAR -->
+                <div class="right-sidebar">
+
+                    <div class="card gauge-widget">
+                        <h3 class="font-tektur" style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">ВЕРДИКТ ИИ-РАДАРА</h3>
+
+                        <div class="circle-chart">
+                            <svg viewBox="0 0 36 36">
+                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="gauge-circle-path" class="circle-progress" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <div class="circle-percentage">
+                                <span id="gauge-score-val">—</span>
+                                <span class="circle-label">AI Score</span>
+                            </div>
+                        </div>
+
+                        <div id="veto-status-pill" class="veto-badge veto-passed">
+                            <i data-lucide="shield-check" style="width: 16px;"></i> ВЕТО: НЕ АКТИВИРОВАНО
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title font-tektur" style="font-size: 15px;">Сигнал 1: Статистика</h3>
+                            <span class="tooltip-hint" data-tip="Сигнал 1 — 20 математических метрик текста без LLM. Наведите на каждую метрику для пояснения.">
+                                <i data-lucide="help-circle" style="width:16px; color: var(--text-muted); cursor: help;"></i>
+                            </span>
+                        </div>
+                        <div id="metrics-list">
+                            <p class="metric-empty">Запустите проверку для расчёта метрик</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- PASSWORD CHANGE MODAL -->
+    <div id="password-modal" class="modal-overlay">
+        <div class="modal-body" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2 class="font-tektur" style="font-size: 18px;">Смена пароля</h2>
+                <button class="btn-secondary btn-sm no-print" onclick="closePasswordModal()">✕ Закрыть</button>
+            </div>
+            <div class="modal-content">
+                <div class="input-group">
+                    <label>Новый пароль (минимум 4 символа)</label>
+                    <input type="password" id="new-password-input" class="input-field" placeholder="••••••••">
+                </div>
+                <div class="input-group">
+                    <label>Повторите новый пароль</label>
+                    <input type="password" id="new-password-confirm" class="input-field" placeholder="••••••••">
+                </div>
+                <button class="btn-primary" onclick="submitPasswordChange()">
+                    <i data-lucide="save"></i> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API KEY ONCE-MODAL -->
+    <div id="apikey-modal" class="modal-overlay">
+        <div class="modal-body" style="max-width: 560px;">
+            <div class="modal-header">
+                <h2 class="font-tektur" style="font-size: 18px;">Новый API-ключ создан</h2>
+                <button class="btn-secondary btn-sm no-print" onclick="closeApiKeyModal()">✕ Закрыть</button>
+            </div>
+            <div class="modal-content">
+                <p style="font-size: 13px; color: var(--accent-danger); font-weight: 700;">
+                    ⚠ Скопируйте ключ сейчас — он больше не появится.
+                </p>
+                <div style="display:flex; gap: 10px; margin-top: 12px;">
+                    <input type="text" id="apikey-once-value" class="input-field" readonly>
+                    <button class="btn-secondary" onclick="copyApiKeyOnce()">
+                        <i data-lucide="copy"></i> Копировать
+                    </button>
+                </div>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">
+                    Используйте его в заголовке <code>Authorization: Bearer &lt;ключ&gt;</code> или
+                    <code>X-API-Key: &lt;ключ&gt;</code>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
