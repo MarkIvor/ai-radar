@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчёт AI Radar — {TITLE}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300..800;1,300..800&family=Tektur:wght@400..900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/report.css">
+</head>
+<body class="report-page-body">
+    <div class="report-shell">
+        <div class="report-header">
+            <div class="report-brand">
+                <div class="logo-icon"><i data-lucide="radar"></i></div>
+                <div>
+                    <h1 class="font-tektur">AI RADAR — ОТЧЁТ</h1>
+                    <p>Детектор ИИ-контента & AI Semantic Judge</p>
+                </div>
+            </div>
+            <div class="report-actions no-print">
+                <button class="btn-secondary" onclick="window.print()">
+                    <i data-lucide="printer" style="width:14px;"></i> Печать / PDF
+                </button>
+                <button class="btn-secondary" onclick="downloadJSON()">
+                    <i data-lucide="download" style="width:14px;"></i> JSON
+                </button>
+                <a class="btn-secondary" href="/">
+                    <i data-lucide="arrow-left" style="width:14px;"></i> Назад
+                </a>
+            </div>
+        </div>
+
+        <div class="report-meta">
+            <div>
+                <span class="meta-label">Работа</span>
+                <span class="meta-value" id="r-title">—</span>
+            </div>
+            <div>
+                <span class="meta-label">Дата проверки</span>
+                <span class="meta-value" id="r-date">—</span>
+            </div>
+            <div>
+                <span class="meta-label">Тип</span>
+                <span class="meta-value" id="r-source">—</span>
+            </div>
+        </div>
+
+        <div class="report-summary-grid">
+            <div class="summary-card score-card">
+                <span class="meta-label">Итоговая вероятность ИИ</span>
+                <div class="gauge-wrap">
+                    <svg viewBox="0 0 36 36" class="gauge-svg">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path id="r-gauge" class="circle-progress" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="gauge-percent"><span id="r-score">—</span><small>AI Score</small></div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <span class="meta-label">Вердикт</span>
+                <div id="r-veto" style="margin-top:8px;">—</div>
+            </div>
+            <div class="summary-card">
+                <span class="meta-label">Академическая честность</span>
+                <h2 class="font-tektur" id="r-integrity" style="font-size:22px; margin-top:8px;">—</h2>
+            </div>
+            <div class="summary-card">
+                <span class="meta-label">Статус судьи</span>
+                <h2 class="font-tektur" id="r-judge-status" style="font-size:18px; margin-top:8px;">—</h2>
+            </div>
+        </div>
+
+        <section class="report-section">
+            <h3 class="font-tektur">Сигнал 1 — Статистические метрики</h3>
+            <div id="r-metrics" class="metrics-grid"></div>
+        </section>
+
+        <section class="report-section">
+            <h3 class="font-tektur">Сигнал 2 — Ансамбль детекторов и метасудья</h3>
+            <div id="r-ensemble"></div>
+        </section>
+
+        <section class="report-section">
+            <h3 class="font-tektur">Фрагменты текста с подозрениями</h3>
+            <div id="r-fragments" class="text-analysis-box"></div>
+        </section>
+
+        <section class="report-section">
+            <h3 class="font-tektur">Текст работы (с подсветкой)</h3>
+            <div id="r-text" class="text-analysis-box"></div>
+        </section>
+
+        <footer class="report-footer">
+            <p>AI Radar v0.1.0 — MIT License. Отчёт сгенерирован автоматически.</p>
+        </footer>
+    </div>
+
+    <script>
+        const REPORT_ID = "{REPORT_ID}";
+        const API_TOKEN = localStorage.getItem('air_access_token') || '';
+    </script>
+    <script src="/static/js/report.js"></script>
+</body>
+</html>
