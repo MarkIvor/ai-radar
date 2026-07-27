@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Radar — Документация API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300..800;1,300..800&family=Tektur:wght@400..900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/docs.css">
+</head>
+<body class="docs-page-body">
+    <div class="docs-shell">
+        <header class="docs-header">
+            <div class="report-brand">
+                <div class="logo-icon"><i data-lucide="radar"></i></div>
+                <div>
+                    <h1 class="font-tektur">AI RADAR — ДОКУМЕНТАЦИЯ API</h1>
+                    <p>Программный доступ к системе детекции ИИ-контента</p>
+                </div>
+            </div>
+            <a class="btn-secondary" href="/"><i data-lucide="arrow-left" style="width:14px;"></i> Назад в систему</a>
+        </header>
+
+        <nav class="docs-toc">
+            <a href="#auth">1. Авторизация</a>
+            <a href="#quick-scan">2. Экспресс-сканирование</a>
+            <a href="#deep-scan">3. Глубокая проверка</a>
+            <a href="#folders">4. Папки и файлы</a>
+            <a href="#reports">5. Отчёты</a>
+            <a href="#admin">6. Админ-управление</a>
+            <a href="#examples">7. Примеры (curl/Python)</a>
+            <a href="#response">8. Формат ответа</a>
+        </nav>
+
+        <section id="auth">
+            <h2 class="font-tektur">1. Авторизация</h2>
+            <p>AI Radar поддерживает два типа учётных данных:</p>
+            <table class="docs-table">
+                <thead><tr><th>Тип</th><th>Назначение</th><th>Заголовок</th><th>Срок жизни</th></tr></thead>
+                <tbody>
+                    <tr><td>Session JWT</td><td>Доступ человека через UI</td><td><code>Authorization: Bearer &lt;jwt&gt;</code></td><td>30 мин (refresh: 7 дней)</td></tr>
+                    <tr><td>API Key</td><td>Программный доступ</td><td><code>Authorization: Bearer air_...</code><br>или <code>X-API-Key: air_...</code></td><td>Бессрочно (до revoke/rotate)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Логин мастер-паролем</h3>
+            <pre><code>POST /api/auth/login
+Content-Type: application/json
+
+{"password": "airadar"}</code></pre>
+            <p>Ответ:</p>
+            <pre><code>{
+  "access_token": "eyJ...",
+  "refresh_token": "eyJ...",
+  "token_type": "Bearer",
+  "expires_in": 1800
+}</code></pre>
+
+            <h3>Обновление токена</h3>
+            <pre><code>POST /api/auth/refresh
+{"refresh_token": "eyJ..."}</code></pre>
+
+            <h3>Проверка текущего субъекта</h3>
+            <pre><code>GET /api/auth/whoami</code></pre>
+            <p>Возвращает <code>{"type": "session"|"api_key", "name": "...", "is_admin": true}</code>.</p>
+        </section>
+
+        <section id="quick-scan">
+            <h2 class="font-tektur">2. Экспресс-сканирование</h2>
+            <p>Без сохранения в папки. Два варианта — файлом или JSON-текстом.</p>
+
+            <h3>Вариант A: JSON-текст (для скриптов)</h3>
+            <pre><code>POST /api/scan/quick/json
+Content-Type: application/json
+Authorization: Bearer air_...
+
+{
+  "text": "В современном мире важно отметить...",
+  "title": "my_work.txt"
+}</code></pre>
+
+            <h3>Вариант B: файл (multipart)</h3>
+            <pre><code>POST /api/scan/quick
+Authorization: Bearer air_...
+Content-Type: multipart/form-data
+
+file=@thesis.docx
+title=thesis.docx</code></pre>
+            <p>Поддерживаются форматы: <code>.txt</code>, <code>.docx</code>, <code>.pdf</code>. Лимит — 10 МБ.</p>
+        </section>
+
+        <section id="deep-scan">
+            <h2 class="font-tektur">3. Глубокая проверка</h2>
+            <p>Запускается для файла, ранее загруженного в хранилище.</p>
+            <pre><code>POST /api/scan/deep/{file_id}
+Authorization: Bearer air_...</code></pre>
+        </section>
+
+        <section id="folders">
+            <h2 class="font-tektur">4. Папки и файлы</h2>
+            <table class="docs-table">
+                <thead><tr><th>Метод</th><th>Путь</th><th>Описание</th></tr></thead>
+                <tbody>
+                    <tr><td>GET</td><td><code>/api/folders?parent_id=...</code></td><td>Список папок (корень или подпапки)</td></tr>
+                    <tr><td>POST</td><td><code>/api/folders</code></td><td>Создать папку/подпапку <code>{"name":"...","parent_id":null}</code></td></tr>
+                    <tr><td>DELETE</td><td><code>/api/folders/{id}</code></td><td>Удалить папку рекурсивно</td></tr>
+                    <tr><td>GET</td><td><code>/api/folders/{id}/files</code></td><td>Список файлов в папке</td></tr>
+                    <tr><td>POST</td><td><code>/api/folders/{id}/files</code></td><td>Загрузить файл (multipart)</td></tr>
+                    <tr><td>DELETE</td><td><code>/api/folders/files/{id}</code></td><td>Удалить файл</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="reports">
+            <h2 class="font-tektur">5. Отчёты</h2>
+            <pre><code>GET /api/scan/reports/recent?limit=10   # последние N проверок
+GET /api/scan/reports/{id}                # полный отчёт по id</code></pre>
+            <p>Полный отчёт также доступен как HTML-страница: <code>/report/{id}</code>.</p>
+        </section>
+
+        <section id="admin">
+            <h2 class="font-tektur">6. Админ-управление</h2>
+            <p>Все эндпоинты требуют admin-прав (любой авторизованный пользователь).</p>
+            <table class="docs-table">
+                <thead><tr><th>Метод</th><th>Путь</th><th>Описание</th></tr></thead>
+                <tbody>
+                    <tr><td>GET</td><td><code>/api/admin/settings</code></td><td>Текущие настройки</td></tr>
+                    <tr><td>PUT</td><td><code>/api/admin/settings</code></td><td>Обновить (пароль, veto_threshold, judge_mode)</td></tr>
+                    <tr><td>GET/POST</td><td><code>/api/admin/llm-providers</code></td><td>Список / добавление LLM-провайдеров</td></tr>
+                    <tr><td>PUT/DELETE</td><td><code>/api/admin/llm-providers/{id}</code></td><td>Изменить / удалить</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/llm-providers/{id}/toggle?enabled=true</code></td><td>Включить/выключить</td></tr>
+                    <tr><td>GET/POST</td><td><code>/api/admin/api-keys</code></td><td>Список / создание API-ключа</td></tr>
+                    <tr><td>DELETE</td><td><code>/api/admin/api-keys/{id}</code></td><td>Отозвать</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/api-keys/{id}/rotate</code></td><td>Ротация (старый отзывается)</td></tr>
+                    <tr><td>GET</td><td><code>/api/admin/judge-status</code></td><td>Статус судьи (OFFLINE/ENSEMBLE_ONLY/FULL)</td></tr>
+                </tbody>
+            </table>
+            <p>При создании LLM-провайдера укажите <code>role</code>: <code>"ensemble"</code> (детектор) или <code>"judge"</code> (метасудья).</p>
+        </section>
+
+        <section id="examples">
+            <h2 class="font-tektur">7. Примеры</h2>
+            <h3>curl — полный цикл</h3>
+            <pre><code># 1) Создать API-ключ (через UI-сессию)
+ACCESS=$(curl -s -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"password":"airadar"}' | python -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+
+curl -s -X POST http://localhost:8000/api/admin/api-keys \
+  -H "Authorization: Bearer $ACCESS" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"CI"}'
+# => {"key":"air_xxxx..."}  # сохранить, показывается один раз
+
+# 2) Скан текста через API-ключ
+curl -X POST http://localhost:8000/api/scan/quick/json \
+  -H "Authorization: Bearer air_xxxx..." \
+  -H "Content-Type: application/json" \
+  -d '{"text":"В современном мире...","title":"work.txt"}'</code></pre>
+
+            <h3>Python (requests)</h3>
+            <pre><code>import requests
+
+API = "http://localhost:8000"
+KEY = "air_xxxx..."
+
+r = requests.post(
+    f"{API}/api/scan/quick/json",
+    headers={"Authorization": f"Bearer {KEY}"},
+    json={"text": "В современном мире важно отметить...", "title": "work.txt"},
+)
+report = r.json()
+print(f"ai_score={report['ai_score']} veto={report['veto']} integrity={report['academic_integrity']}")</code></pre>
+        </section>
+
+        <section id="response">
+            <h2 class="font-tektur">8. Формат ответа сканирования</h2>
+            <pre><code>{
+  "id": 42,
+  "source": "quick",
+  "title": "work.txt",
+  "ai_score": 82,
+  "stat_score": 67,
+  "veto": true,
+  "veto_reason": "Ансамбль: повторяющиеся клише «таким образом»...",
+  "academic_integrity": "НАРУШЕНА",
+  "judge_status": "FULL",
+  "metrics": {
+    "signal1": { "burstiness": 0.21, "lexical_diversity_ttr": 0.42, ... },
+    "signal1_interpretation": "ВЫСОКАЯ вероятность ИИ-генерации...",
+    "signal2_ensemble_panel": { "ensemble": {...}, "judge": {...} },
+    "judge_status": "FULL"
+  },
+  "suspicious_fragments": ["Таким образом, необходимо отметить", ...],
+  "text_preview": "В современном мире...",
+  "created_at": "2026-07-26T14:30:00+00:00"
+}</code></pre>
+            <p><strong>judge_status</strong> принимает значения:</p>
+            <ul>
+                <li><code>OFFLINE</code> — нет LLM, вердикт только на Сигнале 1, VETO не активируется.</li>
+                <li><code>ENSEMBLE_ONLY</code> — есть ансамбль детекторов, нет метасудьи.</li>
+                <li><code>FULL</code> — ансамбль + метасудья, финальный вердикт от судьи.</li>
+            </ul>
+        </section>
+
+        <footer class="report-footer">
+            <p>AI Radar v0.1.0 — MIT License. Интерактивный Swagger: <a href="/docs">/docs</a>.</p>
+        </footer>
+    </div>
+    <script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>
